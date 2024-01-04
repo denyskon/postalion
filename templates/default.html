@@ -1,0 +1,5 @@
+<html>
+{{ range $name, $field := . }}
+	<p><b>{{ $field.Label }}</b>: {{ $field.Content }}</p>
+{{ end }}
+</html>
