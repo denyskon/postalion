@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright 2023 Denys Konovalov <kontakt@denyskon.de>
+// Copyright (c) 2024 Denys Konovalov <kontakt@denyskon.de>
 
 package form
 
