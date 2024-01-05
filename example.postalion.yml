@@ -1,0 +1,37 @@
+---
+mailAccounts:
+  test-account:
+    host: mail.example.com
+    port: 587
+    username: noreply@example.com
+    password: p@ssword
+    encryption: starttls
+forms:
+  test-form:
+    account: test-account
+    from: "Postalion <noreply@example.com>"
+    to: "Contact <contact@example.com>"
+    honeypot: honeypot
+    replyTo:
+      format: "%s <%s>"
+      fields:
+        - name
+        - email
+    subjectField: subject
+    template: default
+    redirect: https://example.com/pages/contact-redirect
+    fields:
+      - name: name
+        label: Name
+        type: string
+      - name: email
+        label: Email
+        type: string
+      - name: subject
+        label: Subject
+        type: string
+      - name: file
+        label: File
+        type: file
+port: 8080
+templateDir: /app/data/templates

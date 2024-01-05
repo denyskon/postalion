@@ -75,7 +75,7 @@ func initConfig() {
 	v.SetConfigName("postalion")
 	v.AddConfigPath(".")
 	v.AddConfigPath("/etc/postalion")
-	v.AddConfigPath("/data")
+	v.AddConfigPath("/app")
 	v.SetEnvPrefix("postalion")
 	v.AutomaticEnv()
 
