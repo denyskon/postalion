@@ -39,16 +39,17 @@ type ReplyTo struct {
 }
 
 type StringField struct {
+	Name    string
 	Label   string
 	Content string
 }
 
-func (f Form) Parse(req *http.Request) (map[string]*StringField, []*mail.File, error) {
+func (f Form) Parse(req *http.Request) ([]*StringField, []*mail.File, error) {
 	fieldsToParse := slices.DeleteFunc[[]Field, Field](f.Fields, func(field Field) bool {
 		return f.SubjectField == field.Name
 	})
 
-	formContent := make(map[string]*StringField)
+	var formContent []*StringField
 	var formFiles []*mail.File
 
 	for _, field := range fieldsToParse {
@@ -56,10 +57,11 @@ func (f Form) Parse(req *http.Request) (map[string]*StringField, []*mail.File, e
 		case "string":
 			{
 
-				formContent[field.Name] = &StringField{
+				formContent = append(formContent, &StringField{
+					Name:    field.Name,
 					Label:   field.Label,
 					Content: req.FormValue(field.Name),
-				}
+				})
 			}
 		case "file":
 			{
@@ -108,7 +110,7 @@ func (f Form) GetSubject(req *http.Request) string {
 	return f.Subject
 }
 
-func (f Form) HTML(content map[string]*StringField) (string, error) {
+func (f Form) HTML(content []*StringField) (string, error) {
 	tmpl, err := template.ParseFiles(f.Template)
 	if err != nil {
 		return "", err
