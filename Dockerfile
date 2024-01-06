@@ -1,5 +1,7 @@
 FROM golang:1.21-alpine AS build-stage
 
+RUN apk add --no-cache git
+
 WORKDIR /usr/src/app
 
 COPY go.mod go.sum ./
@@ -7,8 +9,11 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -o /app/postalion
+RUN go build -o /app/postalion -v -ldflags="-X 'github.com/denyskon/postalion/version.version=$(git describe)'"
 
+FROM alpine:latest AS build-release-stage
+
+COPY --from=build-stage /app/postalion /app/postalion
 COPY templates /app/templates
 
 VOLUME /app/templates

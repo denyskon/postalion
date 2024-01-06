@@ -6,10 +6,10 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"runtime/debug"
 
 	mail_services "github.com/denyskon/postalion/email"
 	form_service "github.com/denyskon/postalion/form"
+	"github.com/denyskon/postalion/version"
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/pat"
 	"github.com/sirupsen/logrus"
@@ -64,15 +64,8 @@ func main() {
 
 	router.Post("/form/{name}", formHandler)
 	router.Get("/status", func(wr http.ResponseWriter, req *http.Request) {
-		info, ok := debug.ReadBuildInfo()
-		if !ok {
-			log.Error("Failed to read build info")
-			wr.WriteHeader(http.StatusInternalServerError)
-			wr.Write([]byte("Failed to read build info"))
-		}
-
 		wr.WriteHeader(http.StatusOK)
-		wr.Write([]byte(fmt.Sprintf("POSTalion %s", info.Main.Version)))
+		wr.Write([]byte(fmt.Sprintf("POSTalion %s", version.Version())))
 	})
 
 	http.Handle("/", router)
