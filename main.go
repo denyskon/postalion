@@ -7,8 +7,9 @@ import (
 	"fmt"
 	"net/http"
 
-	mail_services "github.com/denyskon/postalion/email"
+	carddav_service "github.com/denyskon/postalion/carddav"
 	form_service "github.com/denyskon/postalion/form"
+	mail_service "github.com/denyskon/postalion/mail"
 	"github.com/denyskon/postalion/version"
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/pat"
@@ -18,10 +19,10 @@ import (
 )
 
 type Config struct {
-	MailAccounts map[string]*mail_services.MailAccount `validate:"required,dive,required"`
-	Forms        map[string]*form_service.Form         `validate:"required,dive,required"`
-	Port         int                                   `validate:"required"`
-	TemplateDir  string                                `validate:"required,endsnotwith=/"`
+	MailAccounts map[string]*mail_service.MailAccount `validate:"dive,required"`
+	Forms        map[string]*form_service.Form        `validate:"required,dive,required"`
+	Port         int                                  `validate:"required"`
+	TemplateDir  string                               `validate:"endsnotwith=/"`
 }
 
 var (
@@ -46,18 +47,27 @@ func main() {
 		}
 		mailAccounts[name] = server
 	}
-	if len(mailAccounts) == 0 {
-		log.Error("No mail accounts defined, exiting...")
-		return
-	}
 
 	for name, form := range config.Forms {
-		form.Template = fmt.Sprintf("%s/%s", config.TemplateDir, form.Template)
+		switch form.Type {
+		case "mail":
+			{
+				if mailAccounts[form.MailConfig.Account] == nil {
+					log.Fatalf("could not find mail account %s for form %s", form.MailConfig.Account, name)
+				}
+				form.MailConfig.Template = fmt.Sprintf("%s/%s", config.TemplateDir, form.MailConfig.Template)
+			}
+		case "carddav":
+			continue
+		default:
+			{
+				log.Fatalf("unknown type %s for form %s", form.Type, name)
+			}
+		}
 		forms[name] = form
 	}
 	if len(forms) == 0 {
-		log.Error("No forms defined, exiting...")
-		return
+		log.Fatal("no forms defined, exiting...")
 	}
 
 	router := pat.New()
@@ -108,7 +118,7 @@ func formHandler(wr http.ResponseWriter, req *http.Request) {
 	form := forms[name]
 	if form == nil {
 		wr.WriteHeader(http.StatusNotFound)
-		wr.Write([]byte(fmt.Sprintf("A form with name %s does not exist", name)))
+		wr.Write([]byte(fmt.Sprintf("form with name %s does not exist", name)))
 		return
 	} else {
 		log := log.WithField("form", name)
@@ -117,49 +127,26 @@ func formHandler(wr http.ResponseWriter, req *http.Request) {
 			log.Infof("received bad submission (honeypot = '%s'), ignoring...", req.FormValue(form.Honeypot))
 			return
 		}
-		formContent, formFiles, err := form.Parse(req)
+
+		var err error
+		switch form.Type {
+		case "mail":
+			{
+				acc := mailAccounts[form.MailConfig.Account]
+				if acc != nil {
+					err = fmt.Errorf("mail account %s for form %s does not exist", form.MailConfig.Account, name)
+					break
+				}
+
+				err = mail_service.HandleForm(form, req, acc)
+			}
+		case "carddav":
+			{
+				err = carddav_service.HandleForm(form, req)
+			}
+		}
+
 		if err != nil {
-			log.Error(err)
-			wr.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		account := mailAccounts[form.Account]
-		client, err := account.Connect()
-		if err != nil {
-			log.Error(err)
-			wr.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		body, err := form.HTML(formContent)
-		if err != nil {
-			log.Error(err)
-			wr.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		message := mail.NewMSG().
-			SetFrom(form.From).
-			AddTo(form.To).
-			SetSubject(form.GetSubject(req)).
-			SetBody(mail.TextHTML, body)
-
-		if replyTo := form.GetReplyTo(req); replyTo != "" {
-			message.SetReplyTo(replyTo)
-		}
-
-		for _, file := range formFiles {
-			message.Attach(file)
-		}
-
-		if message.Error != nil {
-			log.Error(message.Error)
-			wr.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		if err := message.Send(client); err != nil {
 			log.Error(err)
 			wr.WriteHeader(http.StatusInternalServerError)
 			return

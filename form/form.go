@@ -7,24 +7,39 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
-	"io"
 	"net/http"
-	"slices"
-
-	mail "github.com/xhit/go-simple-mail/v2"
 )
 
 type Form struct {
-	Account      string
+	Type          string `validate:"required,oneof=mail carddav"`
+	Honeypot      string
+	Redirect      string         `validate:"required,http_url"`
+	CardDavConfig *CardDavConfig `validate:"required_if=Type carddav"`
+	MailConfig    *MailConfig    `validate:"required_if=Type mail"`
+}
+
+type CardDavConfig struct {
+	DavEndpoint string                     `validate:"required"`
+	ContactPath *FormattedField            `validate:"required"`
+	Username    string                     `validate:"required"`
+	Password    string                     `validate:"required"`
+	Fields      map[string]*FormattedField `validate:"required"`
+}
+
+type MailConfig struct {
+	Account      string `validate:"required"`
 	From         string `validate:"required"`
 	To           string `validate:"required"`
-	Honeypot     string
-	ReplyTo      *ReplyTo
 	Subject      string `validate:"required_without=SubjectField"`
 	SubjectField string
-	Template     string  `validate:"required,filepath"`
-	Redirect     string  `validate:"required,http_url"`
+	ReplyTo      *FormattedField
+	Template     string  `validate:"required_if=Type mail"`
 	Fields       []Field `validate:"required"`
+}
+
+type FormattedField struct {
+	Format string   `validate:"required"`
+	Fields []string `validate:"required"`
 }
 
 type Field struct {
@@ -33,85 +48,22 @@ type Field struct {
 	Type  string `validate:"required,oneof=string file"`
 }
 
-type ReplyTo struct {
-	Format string   `validate:"required"`
-	Fields []string `validate:"required"`
-}
-
 type StringField struct {
 	Name    string
 	Label   string
 	Content string
 }
 
-func (f Form) Parse(req *http.Request) ([]*StringField, []*mail.File, error) {
-	fieldsToParse := slices.DeleteFunc[[]Field, Field](f.Fields, func(field Field) bool {
-		return f.SubjectField == field.Name
-	})
-
-	var formContent []*StringField
-	var formFiles []*mail.File
-
-	for _, field := range fieldsToParse {
-		switch field.Type {
-		case "string":
-			{
-
-				formContent = append(formContent, &StringField{
-					Name:    field.Name,
-					Label:   field.Label,
-					Content: req.FormValue(field.Name),
-				})
-			}
-		case "file":
-			{
-				file, fileHeader, err := req.FormFile(field.Name)
-				if err != nil {
-					if err == http.ErrMissingFile {
-						continue
-					}
-					return nil, nil, err
-				}
-				defer file.Close()
-
-				buf := bytes.NewBuffer(nil)
-				if _, err := io.Copy(buf, file); err != nil {
-					return nil, nil, err
-				}
-				formFiles = append(formFiles, &mail.File{
-					Name:     fileHeader.Filename,
-					MimeType: fileHeader.Header["Content-Type"][0],
-					Data:     buf.Bytes(),
-				})
-			}
-		}
+func (f FormattedField) GetFormattedString(req *http.Request) string {
+	var fields []any
+	for _, fieldName := range f.Fields {
+		fields = append(fields, req.FormValue(fieldName))
 	}
-
-	return formContent, formFiles, nil
-}
-
-func (f Form) GetReplyTo(req *http.Request) string {
-	if f.ReplyTo != nil {
-		var fields []any
-		for _, fieldName := range f.ReplyTo.Fields {
-			fields = append(fields, req.FormValue(fieldName))
-		}
-		return fmt.Sprintf(f.ReplyTo.Format, fields...)
-	}
-
-	return ""
-}
-
-func (f Form) GetSubject(req *http.Request) string {
-	if f.SubjectField != "" {
-		return req.FormValue(f.SubjectField)
-	}
-
-	return f.Subject
+	return fmt.Sprintf(f.Format, fields...)
 }
 
 func (f Form) HTML(content []*StringField) (string, error) {
-	tmpl, err := template.ParseFiles(f.Template)
+	tmpl, err := template.ParseFiles(f.MailConfig.Template)
 	if err != nil {
 		return "", err
 	}

@@ -8,30 +8,58 @@ mailAccounts:
     encryption: starttls
 forms:
   test-form:
-    account: test-account
-    from: "Postalion <noreply@example.com>"
-    to: "Contact <contact@example.com>"
+    type: mail
     honeypot: honeypot
-    replyTo:
-      format: "%s <%s>"
-      fields:
-        - name
-        - email
-    subjectField: subject
-    template: default
     redirect: https://example.com/pages/contact-redirect
-    fields:
-      - name: name
-        label: Name
-        type: string
-      - name: email
-        label: Email
-        type: string
-      - name: subject
-        label: Subject
-        type: string
-      - name: file
-        label: File
-        type: file
+    mailConfig:
+      account: test-account
+      from: "Postalion <noreply@example.com>"
+      to: "Contact <contact@example.com>"
+      replyTo:
+        format: "%s <%s>"
+        fields:
+          - name
+          - email
+      subjectField: subject
+      template: default
+      fields:
+        - name: name
+          label: Name
+          type: string
+        - name: email
+          label: Email
+          type: string
+        - name: subject
+          label: Subject
+          type: string
+        - name: file
+          label: File
+          type: file
+  carddav-test:
+    type: carddav
+    cardDavConfig:
+      davEndpoint: https://mail.example.com
+      contactPath:
+        format: "/SOGo/dav/john.doe@example.com/Contacts/private/%s-%s.vcf"
+        fields:
+          - familyname
+          - givenname
+      username: john.doe@example.com
+      password: p@ssword
+      fields:
+        "N":
+          format: "%s;%s"
+          fields:
+            - familyname
+            - givenname
+        "EMAIL":
+          format: "%s"
+          fields:
+            - email
+        "NOTE":
+          format: "Submitted on %s"
+          fields:
+            - date
+    redirect: https://example.com/pages/carddav-redirect
 port: 8080
 templateDir: /app/data/templates
