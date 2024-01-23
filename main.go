@@ -58,7 +58,8 @@ func main() {
 				form.MailConfig.Template = fmt.Sprintf("%s/%s", config.TemplateDir, form.MailConfig.Template)
 			}
 		case "carddav":
-			continue
+			{
+			}
 		default:
 			{
 				log.Fatalf("unknown type %s for form %s", form.Type, name)
@@ -133,11 +134,6 @@ func formHandler(wr http.ResponseWriter, req *http.Request) {
 		case "mail":
 			{
 				acc := mailAccounts[form.MailConfig.Account]
-				if acc != nil {
-					err = fmt.Errorf("mail account %s for form %s does not exist", form.MailConfig.Account, name)
-					break
-				}
-
 				err = mail_service.HandleForm(form, req, acc)
 			}
 		case "carddav":
