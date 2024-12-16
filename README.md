@@ -5,9 +5,7 @@ Lightweight & painless HTML5 form backend
 > Ever wanted to simply list a few fields, set an email account and receive emails every time someone submits your HTML5 form?
 > Me too, and that's what POSTalion is for! While there are lots of different services for that usecase, none I tested were able
 > to work independently to be used e. g. with a static site, could receive file uploads and send them as attachments and were
-> well-maintained & up-to-date ([FormTools 😢](https://github.com/formtools/core)). That's why I created POSTalion.
-
-⚠️ This application should not be considered stable and is provided without any guarantees
+> well-maintained & up-to-date ([FormTools was my tool of choice before becoming unmaintained](https://github.com/formtools/core)). That's why I created POSTalion.
 
 ## Features
 
