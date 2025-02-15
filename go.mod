@@ -6,7 +6,7 @@ module github.com/denyskon/postalion
 go 1.21
 
 require (
-	github.com/go-playground/validator/v10 v10.24.0
+	github.com/go-playground/validator/v10 v10.25.0
 	github.com/gorilla/pat v1.0.2
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/viper v1.19.0
