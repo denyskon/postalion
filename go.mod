@@ -15,7 +15,7 @@ require (
 	github.com/xhit/go-simple-mail/v2 v2.16.0
 )
 
-require github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
+require github.com/go-viper/mapstructure/v2 v2.3.0 // indirect
 
 require (
 	github.com/emersion/go-vcard v0.0.0-20241024213814-c9703dde27ff
