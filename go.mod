@@ -8,7 +8,7 @@ go 1.23.0
 toolchain go1.24.4
 
 require (
-	github.com/go-playground/validator/v10 v10.26.0
+	github.com/go-playground/validator/v10 v10.27.0
 	github.com/gorilla/pat v1.0.2
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/viper v1.20.1
