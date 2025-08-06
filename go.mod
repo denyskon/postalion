@@ -5,7 +5,7 @@ module github.com/denyskon/postalion
 
 go 1.23.0
 
-toolchain go1.24.5
+toolchain go1.24.6
 
 require (
 	github.com/go-playground/validator/v10 v10.27.0
