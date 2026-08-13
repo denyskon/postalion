@@ -30,8 +30,7 @@ type MailConfig struct {
 	Account      string `validate:"required"`
 	From         string `validate:"required"`
 	To           string `validate:"required"`
-	Subject      string `validate:"required_without=SubjectField"`
-	SubjectField string
+	Subject      *FormattedField
 	ReplyTo      *FormattedField
 	Template     string  `validate:"required_if=Type mail"`
 	Fields       []Field `validate:"required"`
