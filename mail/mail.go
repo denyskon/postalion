@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"io"
 	"net/http"
-	"slices"
 	"time"
 
 	form_service "github.com/denyskon/postalion/form"
@@ -56,18 +55,13 @@ func (a MailAccount) Init() (*mail.SMTPServer, error) {
 }
 
 func ParseForm(form *form_service.Form, req *http.Request) ([]*form_service.StringField, []*mail.File, error) {
-	fieldsToParse := slices.DeleteFunc[[]form_service.Field, form_service.Field](form.MailConfig.Fields, func(field form_service.Field) bool {
-		return form.MailConfig.SubjectField == field.Name
-	})
-
 	var formContent []*form_service.StringField
 	var formFiles []*mail.File
 
-	for _, field := range fieldsToParse {
+	for _, field := range form.MailConfig.Fields {
 		switch field.Type {
 		case "string":
 			{
-
 				formContent = append(formContent, &form_service.StringField{
 					Name:    field.Name,
 					Label:   field.Label,
@@ -101,14 +95,6 @@ func ParseForm(form *form_service.Form, req *http.Request) ([]*form_service.Stri
 	return formContent, formFiles, nil
 }
 
-func GetSubject(form *form_service.Form, req *http.Request) string {
-	if form.MailConfig.SubjectField != "" {
-		return req.FormValue(form.MailConfig.SubjectField)
-	}
-
-	return form.MailConfig.Subject
-}
-
 func HandleForm(form *form_service.Form, req *http.Request, account *mail.SMTPServer) error {
 	formContent, formFiles, err := ParseForm(form, req)
 	if err != nil {
@@ -128,7 +114,7 @@ func HandleForm(form *form_service.Form, req *http.Request, account *mail.SMTPSe
 	message := mail.NewMSG().
 		SetFrom(form.MailConfig.From).
 		AddTo(form.MailConfig.To).
-		SetSubject(GetSubject(form, req)).
+		SetSubject(form.MailConfig.Subject.GetFormattedString(req)).
 		SetBody(mail.TextHTML, body)
 
 	if replyTo := form.MailConfig.ReplyTo.GetFormattedString(req); replyTo != "" {
