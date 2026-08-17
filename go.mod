@@ -10,7 +10,7 @@ toolchain go1.26.4
 require (
 	github.com/go-playground/validator/v10 v10.30.2
 	github.com/gorilla/pat v1.0.2
-	github.com/sirupsen/logrus v1.9.4
+	github.com/sirupsen/logrus v1.10.0
 	github.com/spf13/viper v1.21.0
 	github.com/xhit/go-simple-mail/v2 v2.16.0
 )
