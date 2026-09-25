@@ -20,7 +20,10 @@ forms:
         fields:
           - name
           - email
-      subjectField: subject
+      subject:
+        format: "%s"
+        fields:
+          - subject
       template: default
       fields:
         - name: name
