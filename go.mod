@@ -12,7 +12,7 @@ require (
 	github.com/gorilla/pat v1.0.2
 	github.com/sirupsen/logrus v1.10.2
 	github.com/spf13/viper v1.21.0
-	github.com/xhit/go-simple-mail/v2 v2.16.0
+	github.com/xhit/go-simple-mail/v2 v2.17.0
 )
 
 require (
