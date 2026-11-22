@@ -11,6 +11,11 @@ forms:
     type: mail
     honeypot: honeypot
     redirect: https://example.com/pages/contact-redirect
+    # optional: check submissions for spam using an Ollama model
+    # spamCheck:
+    #   endpoint: http://localhost:11434
+    #   model: qwen3:1.7b
+    #   rejectRedirect: https://example.com/pages/message-not-sent
     mailConfig:
       account: test-account
       from: "Postalion <noreply@example.com>"

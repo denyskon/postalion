@@ -10,6 +10,7 @@ import (
 	carddav_service "github.com/denyskon/postalion/carddav"
 	form_service "github.com/denyskon/postalion/form"
 	mail_service "github.com/denyskon/postalion/mail"
+	spam_service "github.com/denyskon/postalion/spam"
 	"github.com/denyskon/postalion/version"
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/pat"
@@ -30,6 +31,9 @@ var (
 	config       Config
 	mailAccounts map[string]*mail.SMTPServer   = make(map[string]*mail.SMTPServer)
 	forms        map[string]*form_service.Form = make(map[string]*form_service.Form)
+	// caches the result of spam_service.Validate per endpoint/model combination
+	// so forms sharing a spam check configuration only validate it once.
+	spamCheckErrors = make(map[string]error)
 )
 
 func main() {
@@ -63,6 +67,15 @@ func main() {
 		default:
 			{
 				log.Fatalf("unknown type %s for form %s", form.Type, name)
+			}
+		}
+		if form.SpamCheck != nil {
+			key := form.SpamCheck.Endpoint + " " + form.SpamCheck.Model
+			if _, checked := spamCheckErrors[key]; !checked {
+				spamCheckErrors[key] = spam_service.Validate(form.SpamCheck)
+			}
+			if err := spamCheckErrors[key]; err != nil {
+				log.Warnf("spam check might not work for form %s: %v", name, err)
 			}
 		}
 		forms[name] = form
@@ -130,6 +143,26 @@ func formHandler(wr http.ResponseWriter, req *http.Request) {
 		}
 
 		var err error
+		if form.SpamCheck != nil {
+			isSpam, reason, checkErr := spam_service.Check(form, req)
+			if checkErr != nil {
+				// Spam checking is best-effort: do not lose legitimate submissions
+				// if the Ollama endpoint is unavailable or misconfigured.
+				log.Errorf("spam check failed, treating submission as ham: %v", checkErr)
+			} else if isSpam {
+				log.Infof("received spam submission, not processing... (reason: %s)", reason)
+				if form.SpamCheck.RejectRedirect != "" {
+					wr.Header().Add("Location", form.SpamCheck.RejectRedirect)
+					wr.WriteHeader(http.StatusSeeOther)
+				} else {
+					wr.Header().Set("Content-Type", "text/plain; charset=utf-8")
+					wr.WriteHeader(http.StatusUnprocessableEntity)
+					wr.Write([]byte("Your submission was not accepted because it was flagged as spam. If you believe this is a mistake, please contact us directly.\n"))
+				}
+				return
+			}
+		}
+
 		switch form.Type {
 		case "mail":
 			{

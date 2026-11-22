@@ -34,7 +34,7 @@ func HandleForm(form *forms_service.Form, req *http.Request) error {
 
 	path := config.ContactPath.GetFormattedString(req)
 	ctx := context.Background()
-	if _, err = c.PutAddressObject(ctx, path, card); err != nil {
+	if _, err = c.PutAddressObject(ctx, path, card, nil); err != nil {
 		return err
 	}
 
