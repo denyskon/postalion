@@ -16,6 +16,13 @@ type Form struct {
 	Redirect      string         `validate:"required,http_url"`
 	CardDavConfig *CardDavConfig `validate:"required_if=Type carddav"`
 	MailConfig    *MailConfig    `validate:"required_if=Type mail"`
+	SpamCheck     *SpamCheckConfig
+}
+
+type SpamCheckConfig struct {
+	Endpoint       string `validate:"required,http_url"`
+	Model          string `validate:"required"`
+	RejectRedirect string `validate:"omitempty,http_url"`
 }
 
 type CardDavConfig struct {

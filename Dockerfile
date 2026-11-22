@@ -9,7 +9,7 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -o /app/postalion -v -ldflags="-X 'github.com/denyskon/postalion/version.version=$(git describe --tags)'"
+RUN go build -o /app/postalion -v -ldflags="-X 'github.com/denyskon/postalion/version.version=$(git describe --tags 2>/dev/null || echo dev)'"
 
 FROM alpine:latest AS build-release-stage
 
